@@ -2,11 +2,10 @@
 using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -16,6 +15,7 @@ namespace methof_of_nedler
     public partial class Form1 : Form
     {
         private List<TextBox> startPointTextBoxes = new List<TextBox>();
+        private bool isRunning;
 
         public Form1()
         {
@@ -23,6 +23,46 @@ namespace methof_of_nedler
             nudVariables.ValueChanged += NudVariables_ValueChanged;
             btnRun.Click += BtnRun_Click;
             UpdateStartPointFields();
+            InitializeNumericUpDowns();
+        }
+
+        private void InitializeNumericUpDowns()
+        {
+            nudAlpha.DecimalPlaces = 2;
+            nudAlpha.Minimum = 0.1M;
+            nudAlpha.Maximum = 5.0M;
+            nudAlpha.Increment = 0.1M;
+            nudAlpha.Value = 1.0M;
+
+            nudBeta.DecimalPlaces = 2;
+            nudBeta.Minimum = 0.1M;
+            nudBeta.Maximum = 0.9M;
+            nudBeta.Increment = 0.1M;
+            nudBeta.Value = 0.5M;
+
+            nudGamma.DecimalPlaces = 2;
+            nudGamma.Minimum = 1.0M;
+            nudGamma.Maximum = 5.0M;
+            nudGamma.Increment = 0.1M;
+            nudGamma.Value = 2.0M;
+
+            nudDelta.DecimalPlaces = 2;
+            nudDelta.Minimum = 0.1M;
+            nudDelta.Maximum = 0.9M;
+            nudDelta.Increment = 0.1M;
+            nudDelta.Value = 0.5M;
+
+            nudTolerance.DecimalPlaces = 10;
+            nudTolerance.Minimum = 0.0000000001M;
+            nudTolerance.Maximum = 0.1M;
+            nudTolerance.Increment = 0.0000001M;
+            nudTolerance.Value = 0.000001M;
+
+            nudMaxIter.DecimalPlaces = 0;
+            nudMaxIter.Minimum = 1;
+            nudMaxIter.Maximum = 100000;
+            nudMaxIter.Increment = 100;
+            nudMaxIter.Value = 1000;
         }
 
         private void NudVariables_ValueChanged(object sender, EventArgs e)
@@ -56,66 +96,270 @@ namespace methof_of_nedler
             }
         }
 
-        private void BtnRun_Click(object sender, EventArgs e)
+        private async void BtnRun_Click(object sender, EventArgs e)
         {
+            if (isRunning) return;
+
             try
             {
-                int dim = (int)nudVariables.Value;
-                double[] x0 = new double[dim];
+                isRunning = true;
+                btnRun.Enabled = false;
 
-                for (int i = 0; i < dim; i++)
-                {
-                    if (!double.TryParse(startPointTextBoxes[i].Text, out x0[i]))
-                        throw new Exception($"Некорректное значение координаты x{i + 1}");
-                }
+                var parameters = ParseInputParameters();
+                var func = CreateFunction(parameters.Expression, parameters.Dimension);
 
-                double alpha = (double)nudAlpha.Value;
-                double beta = (double)nudBeta.Value;
-                double gamma = (double)nudGamma.Value;
-                double delta = (double)nudDelta.Value;
-                double tol = (double)nudTolerance.Value;
-                int maxIter = (int)nudMaxIter.Value;
+                var optimizationResult = await Task.Run(() =>
+                    NelderMeadSimplex.Minimize(
+                        func,
+                        parameters.StartPoint,
+                        parameters.MaxIter,
+                        parameters.Tolerance,
+                        parameters.Alpha,
+                        parameters.Beta,
+                        parameters.Gamma,
+                        parameters.Delta));
 
-                string expr = tbFunction.Text.Trim();
-                if (string.IsNullOrEmpty(expr))
-                    throw new Exception("Введите функцию");
-
-                Func<double[], double> func = CreateFunction(expr, dim);
-
-                var optimizationResult = NelderMeadSimplex.Minimize(
-                    func, x0, maxIter, tol, alpha, beta, gamma, delta);
-
-                lblResult.Text = $"Минимум: F({string.Join(", ", optimizationResult.BestPoint.Select(v => v.ToString("F6")))}) = {optimizationResult.BestValue:F10}";
-
-                dgvIterations.Rows.Clear();
-                for (int i = 0; i < optimizationResult.History.Count; i++)
-                {
-                    var (pt, val) = optimizationResult.History[i];
-                    string pointStr = string.Join("; ", pt.Select(v => v.ToString("F4")));
-                    dgvIterations.Rows.Add(i, pointStr, val.ToString("F8"));
-                }
-
-                if (dim == 2)
-                {
-                    pbPlot.Image?.Dispose(); 
-                    DrawPlot2D(optimizationResult.History);
-                }
-                else
-                {
-                    pbPlot.Image?.Dispose();
-                    Bitmap bmp = new Bitmap(pbPlot.Width, pbPlot.Height);
-                    using (Graphics g = Graphics.FromImage(bmp))
-                    {
-                        g.Clear(Color.White);
-                        g.DrawString("График доступен только для 2D",
-                            new Font("Arial", 12), Brushes.Gray, 10, 10);
-                    }
-                    pbPlot.Image = bmp;
-                }
+                DisplayResults(optimizationResult);
+                DrawPlot(optimizationResult.History);
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Ошибка: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                isRunning = false;
+                btnRun.Enabled = true;
+            }
+        }
+
+        private OptimizationParameters ParseInputParameters()
+        {
+            int dim = (int)nudVariables.Value;
+            double[] x0 = new double[dim];
+
+            for (int i = 0; i < dim; i++)
+            {
+                if (!double.TryParse(startPointTextBoxes[i].Text, out x0[i]))
+                    throw new Exception($"Некорректное значение координаты x{i + 1}");
+            }
+
+            string expr = tbFunction.Text.Trim();
+            if (string.IsNullOrEmpty(expr))
+                throw new Exception("Введите функцию");
+
+            return new OptimizationParameters
+            {
+                Dimension = dim,
+                StartPoint = x0,
+                Expression = expr,
+                Alpha = (double)nudAlpha.Value,
+                Beta = (double)nudBeta.Value,
+                Gamma = (double)nudGamma.Value,
+                Delta = (double)nudDelta.Value,
+                Tolerance = (double)nudTolerance.Value,
+                MaxIter = (int)nudMaxIter.Value
+            };
+        }
+
+        private void DisplayResults(NelderMeadResult result)
+        {
+            lblResult.Text = $"Минимум: F({string.Join(", ", result.BestPoint.Select(v => v.ToString("F6")))}) = {result.BestValue:F10}";
+
+            dgvIterations.Rows.Clear();
+            for (int i = 0; i < result.History.Count; i++)
+            {
+                var (pt, val) = result.History[i];
+                string pointStr = string.Join("; ", pt.Select(v => v.ToString("F4")));
+                dgvIterations.Rows.Add(i, pointStr, val.ToString("F8"));
+            }
+        }
+
+        private void DrawPlot(List<(double[] point, double value)> history)
+        {
+            int dim = (int)nudVariables.Value;
+            pbPlot.Image?.Dispose();
+
+            if (dim != 2 || history.Count < 2)
+            {
+                Bitmap placeholder = new Bitmap(pbPlot.Width, pbPlot.Height);
+                using (Graphics g = Graphics.FromImage(placeholder))
+                {
+                    g.Clear(Color.White);
+                    string message = dim != 2 ? "График доступен только для 2D" : "Недостаточно данных для графика";
+                    g.DrawString(message, new Font("Arial", 12), Brushes.Gray, 10, 10);
+                }
+                pbPlot.Image = placeholder;
+                return;
+            }
+
+            Bitmap bmp = new Bitmap(pbPlot.Width, pbPlot.Height);
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.Clear(Color.White);
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+
+                var bounds = CalculatePlotBounds(history);
+                int padding = 40;
+                int plotWidth = bmp.Width - padding * 2;
+                int plotHeight = bmp.Height - padding * 2;
+
+                int ToScreenX(double x) => padding + (int)((x - bounds.MinX) / (bounds.MaxX - bounds.MinX) * plotWidth);
+                int ToScreenY(double y) => padding + plotHeight - (int)((y - bounds.MinY) / (bounds.MaxY - bounds.MinY) * plotHeight);
+
+                DrawGrid(g, bounds.MinX, bounds.MaxX, bounds.MinY, bounds.MaxY, padding, plotWidth, plotHeight, ToScreenX, ToScreenY);
+                DrawAxes(g, bounds, padding, plotWidth, plotHeight, ToScreenX, ToScreenY);
+                DrawTrajectory(g, history, ToScreenX, ToScreenY);
+                DrawPoints(g, history, ToScreenX, ToScreenY);
+                DrawLabels(g, history, ToScreenX, ToScreenY);
+            }
+
+            pbPlot.Image = bmp;
+        }
+
+        private (double MinX, double MaxX, double MinY, double MaxY) CalculatePlotBounds(List<(double[] point, double value)> history)
+        {
+            double minX = history.Min(p => p.point[0]);
+            double maxX = history.Max(p => p.point[0]);
+            double minY = history.Min(p => p.point[1]);
+            double maxY = history.Max(p => p.point[1]);
+
+            double rangeX = maxX - minX;
+            double rangeY = maxY - minY;
+
+            if (rangeX < 0.001) rangeX = 1;
+            if (rangeY < 0.001) rangeY = 1;
+
+            double marginX = rangeX * 0.15;
+            double marginY = rangeY * 0.15;
+
+            return (minX - marginX, maxX + marginX, minY - marginY, maxY + marginY);
+        }
+
+        private void DrawGrid(Graphics g, double minX, double maxX, double minY, double maxY,
+            int padding, int plotWidth, int plotHeight,
+            Func<double, int> toScreenX, Func<double, int> toScreenY)
+        {
+            double rangeX = maxX - minX;
+            double rangeY = maxY - minY;
+
+            double stepX = Math.Pow(10, Math.Floor(Math.Log10(rangeX)));
+            double stepY = Math.Pow(10, Math.Floor(Math.Log10(rangeY)));
+
+            if (rangeX / stepX < 4) stepX /= 2;
+            if (rangeY / stepY < 4) stepY /= 2;
+
+            using (Pen gridPen = new Pen(Color.LightGray, 1) { DashStyle = DashStyle.Dot })
+            {
+                double startX = Math.Ceiling(minX / stepX) * stepX;
+                for (double x = startX; x <= maxX; x += stepX)
+                {
+                    int screenX = toScreenX(x);
+                    g.DrawLine(gridPen, screenX, padding, screenX, padding + plotHeight);
+                }
+
+                double startY = Math.Ceiling(minY / stepY) * stepY;
+                for (double y = startY; y <= maxY; y += stepY)
+                {
+                    int screenY = toScreenY(y);
+                    g.DrawLine(gridPen, padding, screenY, padding + plotWidth, screenY);
+                }
+            }
+
+            using (Font axisFont = new Font("Arial", 8))
+            using (StringFormat sf = new StringFormat())
+            {
+                sf.Alignment = StringAlignment.Center;
+                sf.LineAlignment = StringAlignment.Near;
+
+                double startX = Math.Ceiling(minX / stepX) * stepX;
+                for (double x = startX; x <= maxX; x += stepX)
+                {
+                    int screenX = toScreenX(x);
+                    g.DrawString(x.ToString("0.##"), axisFont, Brushes.Black,
+                        screenX, padding + plotHeight + 5, sf);
+                }
+
+                sf.Alignment = StringAlignment.Far;
+                sf.LineAlignment = StringAlignment.Center;
+
+                double startY = Math.Ceiling(minY / stepY) * stepY;
+                for (double y = startY; y <= maxY; y += stepY)
+                {
+                    int screenY = toScreenY(y);
+                    g.DrawString(y.ToString("0.##"), axisFont, Brushes.Black,
+                        padding - 5, screenY, sf);
+                }
+            }
+        }
+
+        private void DrawAxes(Graphics g, (double MinX, double MaxX, double MinY, double MaxY) bounds,
+            int padding, int plotWidth, int plotHeight,
+            Func<double, int> toScreenX, Func<double, int> toScreenY)
+        {
+            using (Pen axisPen = new Pen(Color.Black, 2))
+            {
+                int yAxisY = toScreenY(0);
+                yAxisY = Math.Max(padding, Math.Min(padding + plotHeight, yAxisY));
+                g.DrawLine(axisPen, padding, yAxisY, padding + plotWidth, yAxisY);
+
+                int xAxisX = toScreenX(0);
+                xAxisX = Math.Max(padding, Math.Min(padding + plotWidth, xAxisX));
+                g.DrawLine(axisPen, xAxisX, padding, xAxisX, padding + plotHeight);
+            }
+        }
+
+        private void DrawTrajectory(Graphics g, List<(double[] point, double value)> history,
+            Func<double, int> toScreenX, Func<double, int> toScreenY)
+        {
+            using (Pen pen = new Pen(Color.Blue, 2))
+            {
+                for (int i = 0; i < history.Count - 1; i++)
+                {
+                    Point p1 = new Point(toScreenX(history[i].point[0]), toScreenY(history[i].point[1]));
+                    Point p2 = new Point(toScreenX(history[i + 1].point[0]), toScreenY(history[i + 1].point[1]));
+                    g.DrawLine(pen, p1, p2);
+                }
+            }
+        }
+
+        private void DrawPoints(Graphics g, List<(double[] point, double value)> history,
+            Func<double, int> toScreenX, Func<double, int> toScreenY)
+        {
+            for (int i = 0; i < history.Count; i++)
+            {
+                int x = toScreenX(history[i].point[0]);
+                int y = toScreenY(history[i].point[1]);
+
+                if (i == 0)
+                {
+                    g.FillEllipse(Brushes.Red, x - 5, y - 5, 10, 10);
+                    g.DrawEllipse(Pens.DarkRed, x - 5, y - 5, 10, 10);
+                }
+                else if (i == history.Count - 1)
+                {
+                    g.FillEllipse(Brushes.Green, x - 6, y - 6, 12, 12);
+                    g.DrawEllipse(Pens.DarkGreen, x - 6, y - 6, 12, 12);
+                }
+                else
+                {
+                    g.FillEllipse(Brushes.Blue, x - 2, y - 2, 4, 4);
+                }
+            }
+        }
+
+        private void DrawLabels(Graphics g, List<(double[] point, double value)> history,
+            Func<double, int> toScreenX, Func<double, int> toScreenY)
+        {
+            using (Font labelFont = new Font("Arial", 9, FontStyle.Bold))
+            {
+                int startX = toScreenX(history[0].point[0]);
+                int startY = toScreenY(history[0].point[1]);
+                g.DrawString("Старт", labelFont, Brushes.Red, startX + 8, startY - 20);
+
+                int endX = toScreenX(history.Last().point[0]);
+                int endY = toScreenY(history.Last().point[1]);
+                g.DrawString("Финиш", labelFont, Brushes.Green, endX + 8, endY - 20);
             }
         }
 
@@ -185,196 +429,19 @@ public static class DynamicFunction
             result = Regex.Replace(result, @"([a-zA-Z]\w*)\^([a-zA-Z]\w*)", "Math.Pow($1,$2)");
             return result;
         }
+    }
 
-        private void DrawPlot2D(List<(double[] point, double value)> history)
-        {
-            if (history.Count < 2)
-            {
-                // Если истории нет, просто очищаем
-                Bitmap emptyBmp = new Bitmap(pbPlot.Width, pbPlot.Height);
-                using (Graphics g = Graphics.FromImage(emptyBmp))
-                {
-                    g.Clear(Color.White);
-                    g.DrawString("Недостаточно данных для графика",
-                        new Font("Arial", 12), Brushes.Gray, 10, 10);
-                }
-                pbPlot.Image?.Dispose();
-                pbPlot.Image = emptyBmp;
-                return;
-            }
-
-            Bitmap bmp = new Bitmap(pbPlot.Width, pbPlot.Height);
-            using (Graphics g = Graphics.FromImage(bmp))
-            {
-                g.Clear(Color.White);
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-
-                // Определяем границы
-                double minX = history.Min(p => p.point[0]);
-                double maxX = history.Max(p => p.point[0]);
-                double minY = history.Min(p => p.point[1]);
-                double maxY = history.Max(p => p.point[1]);
-
-                // Добавляем отступы (минимум 0.5, чтобы не было нулевого диапазона)
-                double rangeX = maxX - minX;
-                double rangeY = maxY - minY;
-
-                if (rangeX < 0.001) rangeX = 1;
-                if (rangeY < 0.001) rangeY = 1;
-
-                double marginX = rangeX * 0.15;
-                double marginY = rangeY * 0.15;
-
-                minX -= marginX;
-                maxX += marginX;
-                minY -= marginY;
-                maxY += marginY;
-
-                // Размеры области рисования (с отступами для осей)
-                int padding = 40;
-                int plotWidth = bmp.Width - padding * 2;
-                int plotHeight = bmp.Height - padding * 2;
-
-                // Функции преобразования координат
-                int ToScreenX(double x) => padding + (int)((x - minX) / (maxX - minX) * plotWidth);
-                int ToScreenY(double y) => padding + plotHeight - (int)((y - minY) / (maxY - minY) * plotHeight);
-
-                // Рисуем сетку
-                DrawGrid(g, minX, maxX, minY, maxY, padding, plotWidth, plotHeight, ToScreenX, ToScreenY);
-
-                // Рисуем оси
-                using (Pen axisPen = new Pen(Color.Black, 2))
-                {
-                    // Ось X
-                    int yAxisY = ToScreenY(0);
-                    if (yAxisY < padding) yAxisY = padding;
-                    if (yAxisY > padding + plotHeight) yAxisY = padding + plotHeight;
-                    g.DrawLine(axisPen, padding, yAxisY, padding + plotWidth, yAxisY);
-
-                    // Ось Y
-                    int xAxisX = ToScreenX(0);
-                    if (xAxisX < padding) xAxisX = padding;
-                    if (xAxisX > padding + plotWidth) xAxisX = padding + plotWidth;
-                    g.DrawLine(axisPen, xAxisX, padding, xAxisX, padding + plotHeight);
-                }
-
-                // Рисуем траекторию
-                using (Pen pen = new Pen(Color.Blue, 2))
-                {
-                    for (int i = 0; i < history.Count - 1; i++)
-                    {
-                        Point p1 = new Point(ToScreenX(history[i].point[0]), ToScreenY(history[i].point[1]));
-                        Point p2 = new Point(ToScreenX(history[i + 1].point[0]), ToScreenY(history[i + 1].point[1]));
-                        g.DrawLine(pen, p1, p2);
-                    }
-                }
-
-                // Рисуем точки
-                for (int i = 0; i < history.Count; i++)
-                {
-                    int x = ToScreenX(history[i].point[0]);
-                    int y = ToScreenY(history[i].point[1]);
-
-                    if (i == 0) // Начальная точка - красная
-                    {
-                        g.FillEllipse(Brushes.Red, x - 5, y - 5, 10, 10);
-                        g.DrawEllipse(Pens.DarkRed, x - 5, y - 5, 10, 10);
-                    }
-                    else if (i == history.Count - 1) // Конечная точка - зелёная
-                    {
-                        g.FillEllipse(Brushes.Green, x - 6, y - 6, 12, 12);
-                        g.DrawEllipse(Pens.DarkGreen, x - 6, y - 6, 12, 12);
-                    }
-                    else // Промежуточные точки - маленькие синие
-                    {
-                        g.FillEllipse(Brushes.Blue, x - 2, y - 2, 4, 4);
-                    }
-                }
-
-                // Подписываем начальную и конечную точки
-                using (Font labelFont = new Font("Arial", 9, FontStyle.Bold))
-                {
-                    int startX = ToScreenX(history[0].point[0]);
-                    int startY = ToScreenY(history[0].point[1]);
-                    g.DrawString("Старт", labelFont, Brushes.Red, startX + 8, startY - 20);
-
-                    int endX = ToScreenX(history.Last().point[0]);
-                    int endY = ToScreenY(history.Last().point[1]);
-                    g.DrawString("Финиш", labelFont, Brushes.Green, endX + 8, endY - 20);
-                }
-            }
-
-            pbPlot.Image?.Dispose();
-            pbPlot.Image = bmp;
-        }
-
-        private void DrawGrid(Graphics g, double minX, double maxX, double minY, double maxY,
-            int padding, int plotWidth, int plotHeight,
-            Func<double, int> toScreenX, Func<double, int> toScreenY)
-        {
-            // Вычисляем шаг сетки
-            double rangeX = maxX - minX;
-            double rangeY = maxY - minY;
-
-            double stepX = Math.Pow(10, Math.Floor(Math.Log10(rangeX)));
-            double stepY = Math.Pow(10, Math.Floor(Math.Log10(rangeY)));
-
-            if (rangeX / stepX < 4) stepX /= 2;
-            if (rangeY / stepY < 4) stepY /= 2;
-
-            using (Pen gridPen = new Pen(Color.LightGray, 1))
-            {
-                gridPen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dot;
-
-                // Вертикальные линии
-                double startX = Math.Ceiling(minX / stepX) * stepX;
-                for (double x = startX; x <= maxX; x += stepX)
-                {
-                    int screenX = toScreenX(x);
-                    g.DrawLine(gridPen, screenX, padding, screenX, padding + plotHeight);
-                }
-
-                // Горизонтальные линии
-                double startY = Math.Ceiling(minY / stepY) * stepY;
-                for (double y = startY; y <= maxY; y += stepY)
-                {
-                    int screenY = toScreenY(y);
-                    g.DrawLine(gridPen, padding, screenY, padding + plotWidth, screenY);
-                }
-            }
-
-            // Подписи к осям
-            using (Font axisFont = new Font("Arial", 8))
-            using (StringFormat sf = new StringFormat())
-            {
-                sf.Alignment = StringAlignment.Center;
-                sf.LineAlignment = StringAlignment.Near;
-
-                double startX = Math.Ceiling(minX / stepX) * stepX;
-                for (double x = startX; x <= maxX; x += stepX)
-                {
-                    int screenX = toScreenX(x);
-                    g.DrawString(x.ToString("0.##"), axisFont, Brushes.Black,
-                        screenX, padding + plotHeight + 5, sf);
-                }
-
-                sf.Alignment = StringAlignment.Far;
-                sf.LineAlignment = StringAlignment.Center;
-
-                double startY = Math.Ceiling(minY / stepY) * stepY;
-                for (double y = startY; y <= maxY; y += stepY)
-                {
-                    int screenY = toScreenY(y);
-                    g.DrawString(y.ToString("0.##"), axisFont, Brushes.Black,
-                        padding - 5, screenY, sf);
-                }
-            }
-        }
-
-        private void btnRun_Click_1(object sender, EventArgs e)
-        {
-
-        }
+    public class OptimizationParameters
+    {
+        public int Dimension { get; set; }
+        public double[] StartPoint { get; set; }
+        public string Expression { get; set; }
+        public double Alpha { get; set; }
+        public double Beta { get; set; }
+        public double Gamma { get; set; }
+        public double Delta { get; set; }
+        public double Tolerance { get; set; }
+        public int MaxIter { get; set; }
     }
 
     public class NelderMeadResult
@@ -523,4 +590,3 @@ public static class DynamicFunction
         }
     }
 }
-

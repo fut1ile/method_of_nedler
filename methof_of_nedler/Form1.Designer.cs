@@ -39,11 +39,21 @@
             this.nudMaxIter = new System.Windows.Forms.NumericUpDown();
             this.btnRun = new System.Windows.Forms.Button();
             this.dgvIterations = new System.Windows.Forms.DataGridView();
-            this.lblResult = new System.Windows.Forms.Label();
-            this.pbPlot = new System.Windows.Forms.PictureBox();
             this.Iteration = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Point = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Value = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.lblResult = new System.Windows.Forms.Label();
+            this.pbPlot = new System.Windows.Forms.PictureBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
+            this.label5 = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label8 = new System.Windows.Forms.Label();
+            this.label9 = new System.Windows.Forms.Label();
+            this.label10 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.nudVariables)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudAlpha)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudBeta)).BeginInit();
@@ -57,76 +67,75 @@
             // 
             // tbFunction
             // 
-            this.tbFunction.Location = new System.Drawing.Point(62, 12);
+            this.tbFunction.Location = new System.Drawing.Point(105, 8);
             this.tbFunction.Name = "tbFunction";
             this.tbFunction.Size = new System.Drawing.Size(275, 20);
             this.tbFunction.TabIndex = 0;
             // 
             // nudVariables
             // 
-            this.nudVariables.Location = new System.Drawing.Point(62, 38);
+            this.nudVariables.Location = new System.Drawing.Point(105, 36);
             this.nudVariables.Name = "nudVariables";
             this.nudVariables.Size = new System.Drawing.Size(46, 20);
             this.nudVariables.TabIndex = 1;
             // 
             // pnlStartPoint
             // 
-            this.pnlStartPoint.Location = new System.Drawing.Point(62, 68);
+            this.pnlStartPoint.Location = new System.Drawing.Point(105, 68);
             this.pnlStartPoint.Name = "pnlStartPoint";
-            this.pnlStartPoint.Size = new System.Drawing.Size(200, 100);
+            this.pnlStartPoint.Size = new System.Drawing.Size(211, 100);
             this.pnlStartPoint.TabIndex = 2;
             // 
             // nudAlpha
             // 
-            this.nudAlpha.Location = new System.Drawing.Point(62, 174);
+            this.nudAlpha.Location = new System.Drawing.Point(95, 174);
             this.nudAlpha.Name = "nudAlpha";
             this.nudAlpha.Size = new System.Drawing.Size(120, 20);
             this.nudAlpha.TabIndex = 0;
             // 
             // nudBeta
             // 
-            this.nudBeta.Location = new System.Drawing.Point(62, 200);
+            this.nudBeta.Location = new System.Drawing.Point(95, 200);
             this.nudBeta.Name = "nudBeta";
             this.nudBeta.Size = new System.Drawing.Size(120, 20);
             this.nudBeta.TabIndex = 3;
             // 
             // nudGamma
             // 
-            this.nudGamma.Location = new System.Drawing.Point(62, 278);
+            this.nudGamma.Location = new System.Drawing.Point(95, 278);
             this.nudGamma.Name = "nudGamma";
             this.nudGamma.Size = new System.Drawing.Size(120, 20);
             this.nudGamma.TabIndex = 4;
             // 
             // nudDelta
             // 
-            this.nudDelta.Location = new System.Drawing.Point(62, 252);
+            this.nudDelta.Location = new System.Drawing.Point(95, 252);
             this.nudDelta.Name = "nudDelta";
             this.nudDelta.Size = new System.Drawing.Size(120, 20);
             this.nudDelta.TabIndex = 5;
             // 
             // nudTolerance
             // 
-            this.nudTolerance.Location = new System.Drawing.Point(62, 226);
+            this.nudTolerance.Location = new System.Drawing.Point(95, 226);
             this.nudTolerance.Name = "nudTolerance";
             this.nudTolerance.Size = new System.Drawing.Size(120, 20);
             this.nudTolerance.TabIndex = 6;
             // 
             // nudMaxIter
             // 
-            this.nudMaxIter.Location = new System.Drawing.Point(62, 304);
+            this.nudMaxIter.Location = new System.Drawing.Point(95, 304);
             this.nudMaxIter.Name = "nudMaxIter";
             this.nudMaxIter.Size = new System.Drawing.Size(120, 20);
             this.nudMaxIter.TabIndex = 7;
             // 
             // btnRun
             // 
-            this.btnRun.Location = new System.Drawing.Point(62, 330);
+            this.btnRun.Location = new System.Drawing.Point(95, 330);
             this.btnRun.Name = "btnRun";
             this.btnRun.Size = new System.Drawing.Size(75, 23);
             this.btnRun.TabIndex = 8;
-            this.btnRun.Text = "button1";
+            this.btnRun.Text = "Начать";
             this.btnRun.UseVisualStyleBackColor = true;
-            this.btnRun.Click += new System.EventHandler(this.btnRun_Click_1);
             // 
             // dgvIterations
             // 
@@ -135,27 +144,10 @@
             this.Iteration,
             this.Point,
             this.Value});
-            this.dgvIterations.Location = new System.Drawing.Point(289, 38);
+            this.dgvIterations.Location = new System.Drawing.Point(513, 68);
             this.dgvIterations.Name = "dgvIterations";
             this.dgvIterations.Size = new System.Drawing.Size(344, 150);
             this.dgvIterations.TabIndex = 9;
-            // 
-            // lblResult
-            // 
-            this.lblResult.AutoSize = true;
-            this.lblResult.Location = new System.Drawing.Point(690, 45);
-            this.lblResult.Name = "lblResult";
-            this.lblResult.Size = new System.Drawing.Size(35, 13);
-            this.lblResult.TabIndex = 10;
-            this.lblResult.Text = "label1";
-            // 
-            // pbPlot
-            // 
-            this.pbPlot.Location = new System.Drawing.Point(259, 226);
-            this.pbPlot.Name = "pbPlot";
-            this.pbPlot.Size = new System.Drawing.Size(598, 323);
-            this.pbPlot.TabIndex = 11;
-            this.pbPlot.TabStop = false;
             // 
             // Iteration
             // 
@@ -172,11 +164,128 @@
             this.Value.HeaderText = "Значение функции";
             this.Value.Name = "Value";
             // 
+            // lblResult
+            // 
+            this.lblResult.AutoSize = true;
+            this.lblResult.Location = new System.Drawing.Point(471, 15);
+            this.lblResult.Name = "lblResult";
+            this.lblResult.Size = new System.Drawing.Size(35, 13);
+            this.lblResult.TabIndex = 10;
+            this.lblResult.Text = "label1";
+            // 
+            // pbPlot
+            // 
+            this.pbPlot.Location = new System.Drawing.Point(259, 226);
+            this.pbPlot.Name = "pbPlot";
+            this.pbPlot.Size = new System.Drawing.Size(598, 323);
+            this.pbPlot.TabIndex = 11;
+            this.pbPlot.TabStop = false;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(5, 43);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(75, 13);
+            this.label2.TabIndex = 13;
+            this.label2.Text = "Размерность";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(5, 15);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(53, 13);
+            this.label1.TabIndex = 14;
+            this.label1.Text = "Функция";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(5, 68);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(93, 13);
+            this.label3.TabIndex = 15;
+            this.label3.Text = "Начальная точка";
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(55, 181);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(33, 13);
+            this.label4.TabIndex = 16;
+            this.label4.Text = "alpha";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(58, 207);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(28, 13);
+            this.label5.TabIndex = 17;
+            this.label5.Text = "beta";
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(48, 285);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(41, 13);
+            this.label6.TabIndex = 18;
+            this.label6.Text = "gamma";
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(58, 259);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(30, 13);
+            this.label7.TabIndex = 19;
+            this.label7.Text = "delta";
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(36, 233);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(52, 13);
+            this.label8.TabIndex = 20;
+            this.label8.Text = "точность";
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(3, 311);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(86, 13);
+            this.label9.TabIndex = 21;
+            this.label9.Text = "число итераций";
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(410, 15);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(55, 13);
+            this.label10.TabIndex = 22;
+            this.label10.Text = "Решение:";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(869, 561);
+            this.Controls.Add(this.label10);
+            this.Controls.Add(this.label9);
+            this.Controls.Add(this.label8);
+            this.Controls.Add(this.label7);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.label5);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.pbPlot);
             this.Controls.Add(this.lblResult);
             this.Controls.Add(this.dgvIterations);
@@ -224,6 +333,16 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Iteration;
         private System.Windows.Forms.DataGridViewTextBoxColumn Point;
         private System.Windows.Forms.DataGridViewTextBoxColumn Value;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.Label label10;
     }
 }
 
